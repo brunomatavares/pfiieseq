@@ -168,7 +168,9 @@ int main (int argc, char *argv[])
     return 1;
   }
   else {
-    printf("PPM Input file and Output file expected.\n");
+    printf("PPM Input file and Output file expected. Number of Iterations is optional\n");
+    printf("Example 1: ./PfiieSeq res/Harbor.ppm harborSeqResult.pgm\n");
+    printf("Example 2: ./PfiieSeq res/Harbor.ppm harborSeqResult.pgm 30\n");
     return 1;
   }
 
