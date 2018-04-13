@@ -24,15 +24,22 @@ typedef struct {
   int blue;
 } PixelType; 
 
-static double getLight(int p);
-static double getDark(int p);
+static double getLight(int p, int min, int max);
+static double getDark(int p, int min, int max);
 
-double getLight(int p){
-  return (p / 255); 
+double getLight(int p, int min, int max){
+  double result = 0;
+
+  if (min == max)
+    result = p;
+  else
+    result = ((p - min) / (max - min)); 
+
+  return result;
 }
 
-double getDark(int p){
-  return (1 - getLight(p));
+double getDark(int p, int min, int max){
+  return (1 - getLight(p, min, max));
 }
 
 PixelType newValue(PixelType a, PixelType b ,PixelType c, PixelType d, PixelType f, PixelType g, PixelType h, PixelType i, PixelType j){
@@ -70,47 +77,68 @@ PixelType newValue(PixelType a, PixelType b ,PixelType c, PixelType d, PixelType
   int red_median = red[4];
   int green_median = green[4];
   int blue_median = blue[4];
+  int red_min = red[0];
+  int green_min = green[0];
+  int blue_min = blue[0];
+  int red_max = red[8];
+  int green_max = green[8];
+  int blue_max = blue[8];
   
-  int red_cll, red_cdd;
-  int green_cll, green_cdd;
-  int blue_cll, blue_cdd;
+  double red_cll, red_cdd;
+  double green_cll, green_cdd;
+  double blue_cll, blue_cdd;
   
   double red_enhanced, red_neighbours;
   double green_enhanced, green_neighbours;
   double blue_enhanced, blue_neighbours;
-  
-  red_cll = 1 + (red_median/255);
-  red_cdd = 2 - (red_median/255);
+ 
+  if(red_min == red_max) {
+    red_cll = 1;
+    red_cdd = 2;
+  } else {
+    red_cll = 1 + ((red_median - red_min) / (red_max - red_min));
+    red_cdd = 2 - ((red_median - red_min) / (red_max - red_min));
+  }
 
-  red_neighbours = ((0.8*getDark(a.red))+(0.8*getLight(a.red)))
-  /(red_cdd*getDark(f.red)*getDark(a.red)
-    +0.8*getDark(f.red)*getLight(a.red)
-    +0.8*getLight(f.red)*getDark(a.red)
-    +red_cll*getLight(f.red)*getLight(a.red));
+  red_neighbours = ((0.8*getDark(a.red, red_min, red_max))+(0.8*getLight(a.red, red_min, red_max)))
+  /(red_cdd*getDark(f.red, red_min, red_max)*getDark(a.red, red_min, red_max)
+    +0.8*getDark(f.red, red_min, red_max)*getLight(a.red, red_min, red_max)
+    +0.8*getLight(f.red, red_min, red_max)*getDark(a.red, red_min, red_max)
+    +red_cll*getLight(f.red, red_min, red_max)*getLight(a.red, red_min, red_max));
 
-  red_enhanced = getLight(f.red)*(1/8)*red_neighbours;
+  red_enhanced = getLight(f.red, red_min, red_max)*(1/8)*red_neighbours;
 
-  green_cll = 1 + (green_median/255);
-  green_cdd = 2 - (green_median/255);
+  if(green_min == green_max) {
+    green_cll = 1;
+    green_cdd = 2;
+  } else {
+    green_cll = 1 + ((green_median - green_min) / (green_max - green_min));
+    green_cdd = 2 - ((green_median - green_min) / (green_max - green_min));
+  }
 
-  green_neighbours = ((0.8*getDark(a.green))+(0.8*getLight(a.green)))
-  /(green_cdd*getDark(f.green)*getDark(a.green)
-    +0.8*getDark(f.green)*getLight(a.green)
-    +0.8*getLight(f.green)*getDark(a.green)
-    +green_cll*getLight(f.green)*getLight(a.green));
+  green_neighbours = ((0.8*getDark(a.green, green_min, green_max))+(0.8*getLight(a.green, green_min, green_max)))
+  /(green_cdd*getDark(f.green, green_min, green_max)*getDark(a.green, green_min, green_max)
+    +0.8*getDark(f.green, green_min, green_max)*getLight(a.green, green_min, green_max)
+    +0.8*getLight(f.green, green_min, green_max)*getDark(a.green, green_min, green_max)
+    +green_cll*getLight(f.green, green_min, green_max)*getLight(a.green, green_min, green_max));
 
-  green_enhanced = getLight(f.green)*(1/8)*green_neighbours;
+  green_enhanced = getLight(f.green, green_min, green_max)*(1/8)*green_neighbours;
 
-  blue_cll = 1 + (blue_median/255);
-  blue_cdd = 2 - (blue_median/255);
+  if(blue_min == blue_max) {
+    blue_cll = 1;
+    blue_cdd = 2;
+  } else {
+    blue_cll = 1 + ((blue_median - blue_min)/(blue_max - blue_min));
+    blue_cdd = 2 - ((blue_median - blue_min)/(blue_max - blue_min));
+  }
 
-  blue_neighbours = ((0.8*getDark(a.blue))+(0.8*getLight(a.blue)))
-  /(blue_cdd*getDark(f.blue)*getDark(a.blue)
-    +0.8*getDark(f.blue)*getLight(a.blue)
-    +0.8*getLight(f.blue)*getDark(a.blue)
-    +blue_cll*getLight(f.blue)*getLight(a.blue));
+  blue_neighbours = ((0.8*getDark(a.blue, blue_min, blue_max))+(0.8*getLight(a.blue, blue_min, blue_max)))
+  /(blue_cdd*getDark(f.blue, blue_min, blue_max)*getDark(a.blue, blue_min, blue_max)
+    +0.8*getDark(f.blue, blue_min, blue_max)*getLight(a.blue, blue_min, blue_max)
+    +0.8*getLight(f.blue, blue_min, blue_max)*getDark(a.blue, blue_min, blue_max)
+    +blue_cll*getLight(f.blue, blue_min, blue_max)*getLight(a.blue, blue_min, blue_max));
 
-  blue_enhanced = getLight(f.blue)*(1/8)*blue_neighbours;
+  blue_enhanced = getLight(f.blue, blue_min, blue_max)*(1/8)*blue_neighbours;
   if (red_enhanced < 0.5 && f.red > 0)             // P is dark, so reduce P's color  
     pt.red = f.red-1;                              // don’t let newp be less than 0
   else if (red_enhanced > 0.5 && f.red < 255)      // P is light, so increase P's color
@@ -191,7 +219,6 @@ int main (int argc, char *argv[])
   {
     if(niter == 0) {
       printf("PixMap: %s",buf);
-
     } else if (niter == 1) {
 
       char ** res  = NULL;
@@ -229,17 +256,25 @@ int main (int argc, char *argv[])
 
     } else if (niter == 2) {
       printf("Maximum value for each color: %s",buf);
-    
+      buf[strlen(buf) - 1] = '\0'; // eat the newline fgets() stores	
+      break;
     }
     buf[strlen(buf) - 1] = '\0'; // eat the newline fgets() stores	
     niter++;
   }
+  //fclose(fp);
+
+  //if ((fp = fopen(finput, "r")) == NULL)
+  //{ /* Open source file. */
+  //  perror("PPM source file not found!");
+  //  return 1;
+  //}
 
   niter = 0;
 
-  while (fgets(buf, sizeof(buf), fp) != NULL && niter < ((cols*rows*3)+3))
+  while (fgets(buf, sizeof(buf), fp) != NULL && niter < (cols*rows*3))
   {
-    if(niter > 2){
+   // if(niter > 2){
       if(rpg_count == 0){
         _tmpPixel.red = atoi(strdup(buf));
         rpg_count++;		
@@ -257,7 +292,7 @@ int main (int argc, char *argv[])
           j++;
         }
       }
-    }
+   // }
     buf[strlen(buf) - 1] = '\0'; // eat the newline fgets() stores	
     niter++;
   }
