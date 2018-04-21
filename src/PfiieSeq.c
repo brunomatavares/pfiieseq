@@ -3,6 +3,19 @@
 #include <math.h>
 #include <string.h>
 
+
+/*
+#ifdef __linux__
+#define fopen_s(fp, fmt, mode) *(fp)=fopen((fmt), (mode))
+#define fclose_s(fp, fmt, mode) *(fp)=fclose((fmt), (mode))
+#endif
+
+
+#ifdef __unix
+#define fopen_s(pFile,filename,mode) ((*(pFile))=fopen((filename),(mode)))==NULL
+#endif
+*/
+
 //#include <windows.h>
 
 //define GetTickCount()    ((1000.0 * (double)tickGet())/((double)sysClkRateGet())))
@@ -27,7 +40,7 @@ typedef struct {
 static double getLight(int p, int min, int max);
 static double getDark(int p, int min, int max);
 
-double getLight(int p, int min, int max){
+double getLight(int p, int min, int max) {
   double result = 0;
 
   if (min == max)
@@ -38,35 +51,30 @@ double getLight(int p, int min, int max){
   return result;
 }
 
-double getDark(int p, int min, int max){
+double getDark(int p, int min, int max) {
   return (1 - getLight(p, min, max));
 }
 
-PixelType newValue(PixelType a, PixelType b ,PixelType c, PixelType d, PixelType f, PixelType g, PixelType h, PixelType i, PixelType j){
+PixelType newValue(PixelType nb[9]) {
   PixelType pt;
   int _tmpr, _tmpg, _tmpb;
-  int red[9] = {a.red, b.red, c.red, d.red, f.red, g.red, h.red, i.red, j.red};
-  int green[9] = {a.green, b.green, c.green, d.green, f.green, g.green, h.green, i.green, j.green};
-  int blue[9] = {a.blue, b.blue, c.blue, d.blue, f.blue, g.blue, h.blue, i.blue, j.blue};
+  int red[9] = {nb[0].red, nb[1].red, nb[2].red, nb[3].red, nb[4].red, nb[5].red, nb[6].red, nb[7].red, nb[8].red};
+  int green[9] = {nb[0].green,nb[1].green,nb[2].green,nb[3].green,nb[4].green,nb[5].green,nb[6].green,nb[7].green,nb[8].green};
+  int blue[9] = {nb[0].blue,nb[1].blue,nb[2].blue,nb[3].blue,nb[4].blue,nb[5].blue,nb[6].blue,nb[7].blue,nb[8].blue};
   
-  for (int i=0; i<9; i++) 
-  {
-    for (int j=i+1; j<9; j++)
-    {
-      if (red[i] > red[j]) 
-      {
+  for (int i=0; i<9; i++) {
+    for (int j=i+1; j<9; j++) {
+      if (red[i] > red[j]) {
         _tmpr = red[i];
         red[i] = red[j];
         red[j] = _tmpr;
       } 
-      if (green[i] > green[j]) 
-      {
+      if (green[i] > green[j]) {
         _tmpg = green[i];
         green[i] = green[j];
         green[j] = _tmpg;
       } 
-      if (blue[i] > blue[j]) 
-      {
+      if (blue[i] > blue[j]) {
         _tmpb = blue[i];
         blue[i] = blue[j];
         blue[j] = _tmpb;
@@ -100,14 +108,6 @@ PixelType newValue(PixelType a, PixelType b ,PixelType c, PixelType d, PixelType
     red_cdd = 2 - ((red_median - red_min) / (red_max - red_min));
   }
 
-  red_neighbours = ((0.8*getDark(a.red, red_min, red_max))+(0.8*getLight(a.red, red_min, red_max)))
-  /(red_cdd*getDark(f.red, red_min, red_max)*getDark(a.red, red_min, red_max)
-    +0.8*getDark(f.red, red_min, red_max)*getLight(a.red, red_min, red_max)
-    +0.8*getLight(f.red, red_min, red_max)*getDark(a.red, red_min, red_max)
-    +red_cll*getLight(f.red, red_min, red_max)*getLight(a.red, red_min, red_max));
-
-  red_enhanced = getLight(f.red, red_min, red_max)*(1/8)*red_neighbours;
-
   if(green_min == green_max) {
     green_cll = 1;
     green_cdd = 2;
@@ -115,14 +115,6 @@ PixelType newValue(PixelType a, PixelType b ,PixelType c, PixelType d, PixelType
     green_cll = 1 + ((green_median - green_min) / (green_max - green_min));
     green_cdd = 2 - ((green_median - green_min) / (green_max - green_min));
   }
-
-  green_neighbours = ((0.8*getDark(a.green, green_min, green_max))+(0.8*getLight(a.green, green_min, green_max)))
-  /(green_cdd*getDark(f.green, green_min, green_max)*getDark(a.green, green_min, green_max)
-    +0.8*getDark(f.green, green_min, green_max)*getLight(a.green, green_min, green_max)
-    +0.8*getLight(f.green, green_min, green_max)*getDark(a.green, green_min, green_max)
-    +green_cll*getLight(f.green, green_min, green_max)*getLight(a.green, green_min, green_max));
-
-  green_enhanced = getLight(f.green, green_min, green_max)*(1/8)*green_neighbours;
 
   if(blue_min == blue_max) {
     blue_cll = 1;
@@ -132,33 +124,51 @@ PixelType newValue(PixelType a, PixelType b ,PixelType c, PixelType d, PixelType
     blue_cdd = 2 - ((blue_median - blue_min)/(blue_max - blue_min));
   }
 
-  blue_neighbours = ((0.8*getDark(a.blue, blue_min, blue_max))+(0.8*getLight(a.blue, blue_min, blue_max)))
-  /(blue_cdd*getDark(f.blue, blue_min, blue_max)*getDark(a.blue, blue_min, blue_max)
-    +0.8*getDark(f.blue, blue_min, blue_max)*getLight(a.blue, blue_min, blue_max)
-    +0.8*getLight(f.blue, blue_min, blue_max)*getDark(a.blue, blue_min, blue_max)
-    +blue_cll*getLight(f.blue, blue_min, blue_max)*getLight(a.blue, blue_min, blue_max));
 
-  blue_enhanced = getLight(f.blue, blue_min, blue_max)*(1/8)*blue_neighbours;
-  if (red_enhanced < 0.5 && f.red > 0)             // P is dark, so reduce P's color  
-    pt.red = f.red-1;                              // don’t let newp be less than 0
-  else if (red_enhanced > 0.5 && f.red < 255)      // P is light, so increase P's color
-    pt.red = f.red+1;                              // don’t let newp be great than 255
-  else
-    pt.red = f.red;                                // equally split, we leave P alone
+  for(int i=1; i<9; i++) {
+    red_neighbours = red_neighbours + ((0.8*getDark(nb[i].red, red_min, red_max))+(0.8*getLight(nb[i].red, red_min, red_max)))
+    /(red_cdd*getDark(nb[0].red, red_min, red_max)*getDark(nb[i].red, red_min, red_max)
+      +0.8*getDark(nb[0].red, red_min, red_max)*getLight(nb[i].red, red_min, red_max)
+      +0.8*getLight(nb[0].red, red_min, red_max)*getDark(nb[i].red, red_min, red_max)
+      +red_cll*getLight(nb[0].red, red_min, red_max)*getLight(nb[i].red, red_min, red_max));
 
-  if (green_enhanced < 0.5 && f.green > 0)         // P is dark, so reduce P's color  
-    pt.green = f.green-1;                          // don’t let newp be less than 0
-  else if (green_enhanced > 0.5 && f.green < 255)  // P is light, so increase P's color
-    pt.green = f.green+1;                          // don’t let newp be great than 255
-  else
-    pt.green = f.green;                            // equally split, we leave P alone
+    green_neighbours = green_neighbours + ((0.8*getDark(nb[i].green, green_min, green_max))+(0.8*getLight(nb[i].green, green_min, green_max)))
+    /(green_cdd*getDark(nb[0].green, green_min, green_max)*getDark(nb[i].green, green_min, green_max)
+      +0.8*getDark(nb[0].green, green_min, green_max)*getLight(nb[i].green, green_min, green_max)
+      +0.8*getLight(nb[0].green, green_min, green_max)*getDark(nb[i].green, green_min, green_max)
+      +green_cll*getLight(nb[0].green, green_min, green_max)*getLight(nb[i].green, green_min, green_max));
 
-  if (blue_enhanced < 0.5 && f.blue > 0)           // P is dark, so reduce P's color  
-    pt.blue = f.blue-1;                            // don’t let newp be less than 0
-  else if (blue_enhanced > 0.5 && f.blue < 255)    // P is light, so increase P's color
-    pt.blue = f.blue+1;                            // don’t let newp be great than 255
+    blue_neighbours = blue_neighbours + ((0.8*getDark(nb[i].blue, blue_min, blue_max))+(0.8*getLight(nb[i].blue, blue_min, blue_max)))
+    /(blue_cdd*getDark(nb[0].blue, blue_min, blue_max)*getDark(nb[i].blue, blue_min, blue_max)
+      +0.8*getDark(nb[0].blue, blue_min, blue_max)*getLight(nb[i].blue, blue_min, blue_max)
+      +0.8*getLight(nb[0].blue, blue_min, blue_max)*getDark(nb[i].blue, blue_min, blue_max)
+      +blue_cll*getLight(nb[0].blue, blue_min, blue_max)*getLight(nb[i].blue, blue_min, blue_max));
+  }
+
+  red_enhanced = getLight(nb[0].red, red_min, red_max)*(1/8)*red_neighbours;
+  green_enhanced = getLight(nb[0].green, green_min, green_max)*(1/8)*green_neighbours;
+  blue_enhanced = getLight(nb[0].blue, blue_min, blue_max)*(1/8)*blue_neighbours;
+
+  if (red_enhanced < 0.5 && nb[0].red > 0)             // P is dark, so reduce P's color  
+    pt.red = nb[0].red-1;                              // don’t let newp be less than 0
+  else if (red_enhanced > 0.5 && nb[0].red < 255)      // P is light, so increase P's color
+    pt.red = nb[0].red+1;                              // don’t let newp be great than 255
   else
-    pt.blue = f.blue;                              // equally split, we leave P alone
+    pt.red = nb[0].red;                                // equally split, we leave P alone
+
+  if (green_enhanced < 0.5 && nb[0].green > 0)         // P is dark, so reduce P's color  
+    pt.green = nb[0].green-1;                          // don’t let newp be less than 0
+  else if (green_enhanced > 0.5 && nb[0].green < 255)  // P is light, so increase P's color
+    pt.green = nb[0].green+1;                          // don’t let newp be great than 255
+  else
+    pt.green = nb[0].green;                            // equally split, we leave P alone
+
+  if (blue_enhanced < 0.5 && nb[0].blue > 0)           // P is dark, so reduce P's color  
+    pt.blue = nb[0].blue-1;                            // don’t let newp be less than 0
+  else if (blue_enhanced > 0.5 && nb[0].blue < 255)    // P is light, so increase P's color
+    pt.blue = nb[0].blue+1;                            // don’t let newp be great than 255
+  else
+    pt.blue = nb[0].blue;                              // equally split, we leave P alone
 
  // printf("pt: %d %d %d\n",pt.red, pt.green, pt.blue);
   return pt;
@@ -167,35 +177,29 @@ PixelType newValue(PixelType a, PixelType b ,PixelType c, PixelType d, PixelType
 int main (int argc, char *argv[])
 {
   int i = 0, j = 0, niter = 0, rpg_count = 0;
-//  double eps, enew;
-//  double stime, etime;
-//  double **aux;
   char fname[40];
   char finput[40];
   FILE *out;
-  size_t rows;
-  size_t cols;
+  int rows;
+  int cols;
   PixelType _tmpPixel; 
   FILE* fp;
   char buf[50];
   int iterations = 10;
 
-  if( argc == 3 ) {
+  if(argc == 3) {
     printf("The input ppm is %s\n", argv[1]);
     printf("The output ppm will be %s\n", argv[2]);
     printf("Default number of iterations %d\n", iterations);
-  }
-  else if( argc == 4 ) {
+  } else if(argc == 4) {
     printf("The input ppm is %s\n", argv[1]);
     printf("The output ppm will be %s\n", argv[2]);
     iterations = atoi(argv[3]);
     printf("Number of iterations %d\n", iterations);
-  }
-  else if( argc > 4 ) {
+  } else if(argc > 4) {
     printf("Too many arguments supplied.\n");
     return 1;
-  }
-  else {
+  } else {
     printf("PPM Input file and Output file expected. Number of Iterations is optional\n");
     printf("Example 1: ./PfiieSeq res/Harbor.ppm harborSeqResult.pgm\n");
     printf("Example 2: ./PfiieSeq res/Harbor.ppm harborSeqResult.pgm 30\n");
@@ -209,20 +213,17 @@ int main (int argc, char *argv[])
   PixelType **a; 
   PixelType **_aTmp;
 
-  if ((fp = fopen(finput, "r")) == NULL)
-  { /* Open source file. */
+  if ((fp = fopen(finput, "r")) == NULL) { /* Open source file. */
     perror("PPM source file not found!");
     return 1;
   }
 
-  while (fgets(buf, sizeof(buf), fp) != NULL && niter < 3)
-  {
+  while (fgets(buf, sizeof(buf), fp) != NULL && niter < 3) {
     if(niter == 0) {
       printf("PixMap: %s",buf);
     } else if (niter == 1) {
-
-      char ** res  = NULL;
-      char *  p    = strtok (buf, " ");
+      char **res = NULL;
+      char *p = strtok (buf, " ");
       int n_spaces = 0;
       
       /* split string and append tokens to 'res' */
@@ -244,15 +245,15 @@ int main (int argc, char *argv[])
 
       free(res);
 
-      printf("Width: %zu | height: %zu\n",cols,rows);
+      printf("Width: %d | height: %d\n",cols,rows);
   
-      a = malloc(rows*sizeof(PixelType*));  
+      a = (PixelType**) malloc(rows*sizeof(PixelType*));  
       for (int i = 0; i < rows; i++)  
-        a[i] = malloc(cols*sizeof(PixelType)); 
+        a[i] = (PixelType*) malloc(cols*sizeof(PixelType)); 
 
-      _aTmp = malloc(rows*sizeof(PixelType*));  
+      _aTmp = (PixelType**) malloc(rows*sizeof(PixelType*));  
       for (int i = 0; i < rows; i++)  
-        _aTmp[i] = malloc(cols*sizeof(PixelType)); 
+        _aTmp[i] = (PixelType*) malloc(cols*sizeof(PixelType)); 
 
     } else if (niter == 2) {
       printf("Maximum value for each color: %s",buf);
@@ -262,37 +263,27 @@ int main (int argc, char *argv[])
     buf[strlen(buf) - 1] = '\0'; // eat the newline fgets() stores	
     niter++;
   }
-  //fclose(fp);
-
-  //if ((fp = fopen(finput, "r")) == NULL)
-  //{ /* Open source file. */
-  //  perror("PPM source file not found!");
-  //  return 1;
-  //}
 
   niter = 0;
 
-  while (fgets(buf, sizeof(buf), fp) != NULL && niter < (cols*rows*3))
-  {
-   // if(niter > 2){
-      if(rpg_count == 0){
-        _tmpPixel.red = atoi(strdup(buf));
-        rpg_count++;		
-      } else if(rpg_count == 1){
-        _tmpPixel.green = atoi(strdup(buf));
-        rpg_count++;		
-      } else if(rpg_count == 2){
-        _tmpPixel.blue = atoi(strdup(buf));
-        rpg_count = 0;
-        a[i][j] = _tmpPixel;
-        if((j+1) == (int)cols){
-          j = 0;
-          i++;
-        } else {
-          j++;
-        }
+  while (fgets(buf, sizeof(buf), fp) != NULL && niter < (cols*rows*3)) {
+    if(rpg_count == 0) {
+      _tmpPixel.red = atoi(strdup(buf));
+      rpg_count++;		
+    } else if(rpg_count == 1) {
+      _tmpPixel.green = atoi(strdup(buf));
+      rpg_count++;		
+    } else if(rpg_count == 2) {
+      _tmpPixel.blue = atoi(strdup(buf));
+      rpg_count = 0;
+      a[i][j] = _tmpPixel;
+      if((j+1) == (int)cols) {
+        j = 0;
+        i++;
+      } else {
+        j++;
       }
-   // }
+    }
     buf[strlen(buf) - 1] = '\0'; // eat the newline fgets() stores	
     niter++;
   }
@@ -305,21 +296,21 @@ int main (int argc, char *argv[])
     step++;     
     diffs = 0;
 
-    for(int r=1;r<rows-1;r++){
-      for(int c=1;c<cols-1;c++){
-        _aTmp[r][c] = newValue(a[r-1][c-1], a[r-1][c], a[r-1][c+1],a[r][c-1], a[r][c], a[r][c+1],a[r+1][c-1], a[r+1][c], a[r+1][c+1]);
+    for(int r=1;r<rows-1;r++) {
+      for(int c=1;c<cols-1;c++) {
+	PixelType neighbors[9] = {a[r][c], a[r-1][c-1], a[r-1][c], a[r-1][c+1],a[r][c-1],a[r][c+1],a[r+1][c-1], a[r+1][c], a[r+1][c+1]};
+        _aTmp[r][c] = newValue(neighbors);
         if (_aTmp[r][c].red != a[r][c].red && _aTmp[r][c].green != a[r][c].green && _aTmp[r][c].blue != a[r][c].blue) 
           diffs++;
       }
     }	
     converged = (diffs == 0);     
 
-    for(int r=1;r<rows-1;r++){
-      for(int c=1;c<cols-1;c++){		
+    for(int r=1;r<rows-1;r++) {
+      for(int c=1;c<cols-1;c++) {		
         a[r][c] = _aTmp[r][c];
       }
     }
-
   }
   
   // use a well-defined image standard: Netpbm
